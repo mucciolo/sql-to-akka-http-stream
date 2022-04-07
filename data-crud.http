@@ -1,0 +1,29 @@
+POST http://localhost:8080/data
+Content-Type: application/json
+
+{
+  "value": {{$randomInt}}
+}
+
+###
+
+GET http://localhost:8080/data
+Accept: application/json
+
+###
+
+GET http://localhost:8080/data/1
+Accept: application/json
+
+###
+
+PUT http://localhost:8080/data/1
+Content-Type: application/json
+
+{
+  "value": {{$randomInt}}
+}
+
+###
+
+DELETE http://localhost:8080/data/1

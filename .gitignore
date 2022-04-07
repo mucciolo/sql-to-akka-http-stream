@@ -1,0 +1,4 @@
+.idea
+.bsp
+target/
+/kafka-connectors/debezium-connector-postgres/

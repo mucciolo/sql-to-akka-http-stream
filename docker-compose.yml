@@ -1,0 +1,130 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:14.2-alpine
+    container_name: postgres
+    restart: always
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: p455w0rd
+      POSTGRES_DB: sql-to-http-stream
+    command: [ "postgres", "-c", "wal_level=logical" ]
+
+  influxdb:
+    image: influxdb:2.1.1-alpine
+    container_name: influxdb
+    restart: always
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: p455w0rd
+      DOCKER_INFLUXDB_INIT_ORG: com.mucciolo
+      DOCKER_INFLUXDB_INIT_BUCKET: sql-to-http-stream
+
+  zookeeper:
+    image: debezium/zookeeper:1.8.1.Final
+    container_name: zookeeper
+    restart: always
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/zookeeper/data
+      - zookeeper_txns:/zookeeper/txns
+      - zookeeper_logs:/zookeeper/logs
+      - zookeeper_conf:/zookeeper/conf
+      - zookeeper_tmp:/tmp
+
+  kafka:
+    image: debezium/kafka:1.8.1.Final
+    container_name: kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/kafka/data
+      - kafka_logs:/kafka/logs
+      - kafka_config:/kafka/config
+    environment:
+      BROKER_ID: 1
+      ZOOKEEPER_CONNECT: "zookeeper:2181"
+
+  schema-registry:
+    image: apicurio/apicurio-registry-kafkasql:2.2.2.Final
+    container_name: schema-registry
+    restart: always
+    depends_on:
+      - kafka
+    ports:
+      - "9093:8080"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+
+  kafka-connect:
+    image: debezium/connect-base:1.8.1.Final
+    container_name: kafka-connect
+    restart: always
+    depends_on:
+      - postgres
+      - kafka
+      - schema-registry
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: "kafka:9092"
+      REST_PORT: 8083
+      GROUP_ID: kafka-connect
+      CONFIG_STORAGE_TOPIC: _connect-configs
+      OFFSET_STORAGE_TOPIC: _connect-offsets
+      STATUS_STORAGE_TOPIC: _connect-status
+      REST_ADVERTISED_HOST_NAME: "kafka-connect"
+      LOG4J_APPENDER_STDOUT_LAYOUT_CONVERSIONPATTERN: "[%d] %p %X{connector.context}%m (%c:%L)%n"
+      CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      ENABLE_APICURIO_CONVERTERS: true
+    volumes:
+      - kafka_logs:/kafka/logs
+      - kafka_config:/kafka/config
+      - $PWD/kafka-connectors:/kafka/connect:rwx
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8090:8080"
+    depends_on:
+      - kafka
+      - zookeeper
+      - kafka-connect
+    environment:
+      KAFKA_CLUSTERS_0_NAME: localhost
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8080/apis/ccompat/v6
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: localhost
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083/
+
+volumes:
+  postgres:
+  influxdb_data:
+  influxdb_config:
+  zookeeper_data:
+  zookeeper_txns:
+  zookeeper_logs:
+  zookeeper_conf:
+  zookeeper_tmp:
+  kafka_data:
+  kafka_logs:
+  kafka_config:

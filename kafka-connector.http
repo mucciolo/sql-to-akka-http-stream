@@ -1,0 +1,54 @@
+POST http://localhost:8083/connectors
+Content-Type: application/json
+
+{
+  "name": "postgres-data",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "plugin.name": "pgoutput",
+
+    "database.port": "5432",
+    "database.hostname": "postgres",
+    "database.password": "p455w0rd",
+    "database.allowPublicKeyRetrieval": "true",
+    "database.user": "admin",
+    "database.dbname": "sql-to-http-stream",
+    "database.server.id": "1",
+    "database.history.kafka.bootstrap.servers": "kafka:9092",
+    "database.history.kafka.topic": "database.schema.history",
+    "database.server.name": "localhost",
+
+    "table.include.list": "public.data",
+    "include.schema.changes": "true",
+
+    "key.converter": "io.apicurio.registry.utils.converter.AvroConverter",
+    "key.converter.apicurio.registry.url": "http://schema-registry:8080",
+    "key.converter.apicurio.registry.auto-register": "true",
+    "key.converter.apicurio.registry.find-latest": "true",
+    "key.converter.apicurio.registry.converter.serializer": "io.apicurio.registry.serde.avro.AvroKafkaSerializer",
+    "key.converter.apicurio.registry.converter.deserializer": "io.apicurio.registry.serde.avro.AvroKafkaDeserializer",
+
+    "value.converter.apicurio.registry.url": "http://schema-registry:8080",
+    "value.converter": "io.apicurio.registry.utils.converter.AvroConverter",
+    "value.converter.apicurio.registry.converter.serializer": "io.apicurio.registry.serde.avro.AvroKafkaSerializer",
+    "value.converter.apicurio.registry.converter.deserializer": "io.apicurio.registry.serde.avro.AvroKafkaDeserializer",
+    "value.converter.apicurio.registry.auto-register": "true",
+    "value.converter.apicurio.registry.find-latest": "true",
+
+    "transforms": "unwrap",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.add.fields": "source.ts_ms:timestamp",
+    "transforms.unwrap.add.fields.prefix": ""
+  }
+}
+
+###
+
+PUT http://localhost:8083/connectors/postgres-data/config
+Content-Type: application/json
+
+{}
+
+###
+
+DELETE http://localhost:8083/connectors/postgres-data
