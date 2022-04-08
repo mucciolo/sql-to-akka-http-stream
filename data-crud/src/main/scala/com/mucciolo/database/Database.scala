@@ -1,7 +1,7 @@
 package com.mucciolo.database
 
-import cats.effect.{Resource, _}
-import com.typesafe.config.Config
+import cats.effect._
+import com.mucciolo.config.DatabaseConf
 import doobie.hikari.HikariTransactor
 import org.flywaydb.core.Flyway
 
@@ -9,21 +9,8 @@ import scala.concurrent.ExecutionContext
 
 object Database {
 
-  object ConfigKey {
-    val Driver: String = "database.driver"
-    val Url: String = "database.url"
-    val User: String = "database.user"
-    val Pass: String = "database.pass"
-  }
-
-  def transactor(config: Config, executionContext: ExecutionContext): Resource[IO, HikariTransactor[IO]] = {
-    HikariTransactor.newHikariTransactor[IO](
-      config.getString(ConfigKey.Driver),
-      config.getString(ConfigKey.Url),
-      config.getString(ConfigKey.User),
-      config.getString(ConfigKey.Pass),
-      executionContext
-    )
+  def transactor(config: DatabaseConf, executionContext: ExecutionContext): Resource[IO, HikariTransactor[IO]] = {
+    HikariTransactor.newHikariTransactor[IO]( config.driver, config.url, config.user, config.pass,executionContext)
   }
 
   def migrate(transactor: HikariTransactor[IO]): Resource[IO, Unit] = {
