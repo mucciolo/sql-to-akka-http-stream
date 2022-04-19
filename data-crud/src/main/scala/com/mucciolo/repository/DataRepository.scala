@@ -8,8 +8,8 @@ import doobie.implicits._
 
 class DataRepository(transactor: Transactor[IO]) {
 
-  def insert(value: Int): IO[Data] = {
-    sql"INSERT INTO data(value) VALUES ($value)".update
+  def insert(data: Data): IO[Data] = {
+    sql"INSERT INTO data(value) VALUES (${data.value})".update
       .withUniqueGeneratedKeys[Data]("id", "value")
       .transact(transactor)
   }

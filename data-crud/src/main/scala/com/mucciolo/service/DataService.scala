@@ -34,8 +34,8 @@ class DataService(repository: DataRepository) extends Http4sDsl[IO] {
 
     case req @ POST -> DataPath =>
       for {
-        inputData <- req.decodeJson[Data]
-        createdData <- repository.insert(inputData.value)
+        data <- req.decodeJson[Data]
+        createdData <- repository.insert(data)
         response <- Created(createdData.asJson)
       } yield response
 
