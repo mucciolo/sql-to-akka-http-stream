@@ -4,8 +4,10 @@ val MunitVersion = "0.7.29"
 val LogbackVersion = "1.2.11"
 val MunitCatsEffectVersion = "1.0.7"
 val DoobieVersion = "1.0.0-RC1"
-val FlywayVersion = "8.5.4"
+val FlywayVersion = "8.5.7"
 val PureConfigVersion = "0.17.1"
+val ScalaTestVersion = "3.2.11"
+val ScalaMockVersion = "5.2.0"
 
 lazy val root = (project in file("."))
   .settings(
@@ -30,9 +32,9 @@ lazy val root = (project in file("."))
       "org.tpolecat"          %% "doobie-postgres"        % DoobieVersion,
       "org.tpolecat"          %% "doobie-hikari"          % DoobieVersion,
 
-      "org.flywaydb"          %  "flyway-core"            % FlywayVersion
-    ),
-    addCompilerPlugin("org.typelevel" %% "kind-projector"     % "0.13.2" cross CrossVersion.full),
-    addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % "0.3.1"),
-    testFrameworks += new TestFramework("munit.Framework")
+      "org.flywaydb"          %  "flyway-core"            % FlywayVersion,
+
+      "org.scalatest"         %% "scalatest"              % ScalaTestVersion  % "it,test",
+      "org.scalamock"         %% "scalamock"              % ScalaMockVersion  % "test"
+    )
   )
