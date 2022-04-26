@@ -1,13 +1,13 @@
-val Http4sVersion = "0.23.11"
-val CirceVersion = "0.14.1"
-val MunitVersion = "0.7.29"
-val LogbackVersion = "1.2.11"
-val MunitCatsEffectVersion = "1.0.7"
-val DoobieVersion = "1.0.0-RC1"
-val FlywayVersion = "8.5.7"
-val PureConfigVersion = "0.17.1"
-val ScalaTestVersion = "3.2.11"
-val ScalaMockVersion = "5.2.0"
+lazy val Http4sVersion = "0.23.11"
+lazy val CirceVersion = "0.14.1"
+lazy val MunitVersion = "0.7.29"
+lazy val LogbackVersion = "1.2.11"
+lazy val MunitCatsEffectVersion = "1.0.7"
+lazy val DoobieVersion = "1.0.0-RC1"
+lazy val FlywayVersion = "8.5.7"
+lazy val PureConfigVersion = "0.17.1"
+lazy val ScalaTestVersion = "3.2.11"
+lazy val ScalaMockVersion = "5.2.0"
 
 lazy val root = (project in file("."))
   .settings(
