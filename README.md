@@ -17,7 +17,7 @@ With the cursor at the project's root folder
 4. Use `sbt run` to start `data-crud`, `influxdb-sink-connector` and `influx-stream`
 
 Now you can make the requests exemplified at `data-crud.http` to `data-crud` and observe the streamed average at
-`http://localhost:8081/moving-average/{id}?timeWindow={seconds}&period={seconds}`
+`http://localhost:8081/moving-average/{id}?period={seconds}&every={seconds}` to change
 
 ## Libraries 
 | Service                 | Libraries                                            |
