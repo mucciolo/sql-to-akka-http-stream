@@ -30,6 +30,7 @@ services:
       DOCKER_INFLUXDB_INIT_PASSWORD: p455w0rd
       DOCKER_INFLUXDB_INIT_ORG: com.mucciolo
       DOCKER_INFLUXDB_INIT_BUCKET: sql-to-http-stream
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: admin-token
 
   zookeeper:
     image: debezium/zookeeper:1.8.1.Final
