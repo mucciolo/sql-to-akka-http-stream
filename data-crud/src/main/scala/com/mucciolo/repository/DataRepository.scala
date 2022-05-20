@@ -5,6 +5,9 @@ import com.mucciolo.entity.Data
 import doobie.util.transactor.Transactor
 import fs2.Stream
 import doobie.implicits._
+import doobie.util.fragments.whereAndOpt
+
+import scala.language.postfixOps
 
 class DataRepository(transactor: Transactor[IO]) {
 
@@ -14,8 +17,14 @@ class DataRepository(transactor: Transactor[IO]) {
       .transact(transactor)
   }
 
-  def get(limit: Int, offset: Int): Stream[IO, Data] = {
-    sql"SELECT * FROM data LIMIT $limit OFFSET $offset".query[Data].stream.transact(transactor)
+  def get(limit: Int, offset: Int, min: Option[Int] = None): Stream[IO, Data] = {
+
+    val minFragment = min.map(minValue => fr"value >= $minValue")
+
+    (fr"SELECT * FROM data" ++ whereAndOpt(minFragment) ++ fr"LIMIT $limit OFFSET $offset")
+      .query[Data]
+      .stream
+      .transact(transactor)
   }
 
   def findById(id: Long): IO[Option[Data]] = {

@@ -18,13 +18,14 @@ class DataService(repository: DataRepository) extends Http4sDsl[IO] {
   private object QueryParam {
     object Limit extends QueryParamDecoderMatcher[Int]("limit")
     object Offset extends QueryParamDecoderMatcher[Int]("offset")
+    object MinValue extends OptionalQueryParamDecoderMatcher[Int]("min")
   }
 
   val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
 
-    case GET -> DataPath :? QueryParam.Limit(limit) +& QueryParam.Offset(offset)  =>
+    case GET -> DataPath :? QueryParam.Limit(limit) +& QueryParam.Offset(offset) +& QueryParam.MinValue(min)  =>
       Ok(
-        Stream("[") ++ repository.get(limit, offset).map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"),
+        Stream("[") ++ repository.get(limit, offset, min).map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"),
         `Content-Type`(MediaType.application.json)
       )
 
