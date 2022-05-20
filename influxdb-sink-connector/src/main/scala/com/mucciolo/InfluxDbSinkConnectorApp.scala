@@ -24,8 +24,8 @@ object InfluxDbSinkConnectorApp extends App {
       Future.successful(Done)
 
     case Right(config) =>
-      implicit val actorSystem: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.connectorName)
-      InfluxDbSinkConnector.run(config.influx, config.kafka)
+      implicit val actorSystem: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.connector.name)
+      InfluxDbSinkConnector.run(config)
 
   }
 

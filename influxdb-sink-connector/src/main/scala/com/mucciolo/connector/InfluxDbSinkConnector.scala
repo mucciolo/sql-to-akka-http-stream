@@ -5,13 +5,13 @@ import akka.actor.CoordinatedShutdown
 import akka.actor.typed.ActorSystem
 import akka.kafka.scaladsl.{Committer, Consumer}
 import akka.kafka.{CommitterSettings, ConsumerSettings, Subscriptions}
-import akka.stream.ActorAttributes.{SupervisionStrategy, supervisionStrategy}
+import akka.stream.ActorAttributes.supervisionStrategy
 import akka.stream.Supervision
 import akka.stream.scaladsl.{Flow, Keep}
 import com.influxdb.client.InfluxDBClientFactory
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
-import com.mucciolo.connector.config.{InfluxDbConf, KafkaConf}
+import com.mucciolo.connector.config.{AppConf, ConnectorConf, KafkaConf}
 import io.apicurio.registry.rest.client.RegistryClientFactory
 import io.apicurio.registry.serde.avro.AvroKafkaDeserializer
 import org.apache.avro.generic.GenericRecord
@@ -27,17 +27,23 @@ import scala.language.postfixOps
 object InfluxDbSinkConnector {
 
   private val log: Logger = LoggerFactory.getLogger(getClass)
+  private object Measurement {
+    val id = "id"
+    val field = "value"
+  }
 
-  def run(influxDbConf: InfluxDbConf, kafkaConf: KafkaConf)(implicit actorSystem: ActorSystem[Nothing]): Future[Done] = {
+  def run(config: AppConf)(implicit actorSystem: ActorSystem[Nothing]): Future[Done] = {
 
     implicit val executionContext: ExecutionContext = actorSystem.executionContext
 
-    val influxDb = InfluxDBClientFactory.create(influxDbConf.asInfluxDBClientOptions).getWriteApiBlocking
-    val kafkaConsumerSettings = buildKafkaConsumerSettings(kafkaConf)
+    val influxDb = InfluxDBClientFactory.create(config.influx.asInfluxDBClientOptions).getWriteApiBlocking
+    val kafkaConsumerSettings = buildKafkaConsumerSettings(config.kafka)
+    val convertGenericRecordToPoint = genericRecordToPoint(config.connector)(_)
+
     val (control, stream) = Consumer
-      .sourceWithOffsetContext(kafkaConsumerSettings, Subscriptions.topics(kafkaConf.topic))
+      .sourceWithOffsetContext(kafkaConsumerSettings, Subscriptions.topics(config.kafka.topic))
       .via(Flow.fromFunction {
-        case (record, offset) => (genericRecordToPoint(record), offset)
+        case (record, offset) => (convertGenericRecordToPoint(record), offset)
       })
       .via(Flow.fromFunction {
         case (point, offset) => (influxDb.writePoint(point), offset)
@@ -68,14 +74,14 @@ object InfluxDbSinkConnector {
 
   }
 
-  private def genericRecordToPoint(record: ConsumerRecord[_, GenericRecord]): Point = {
+  private def genericRecordToPoint(config: ConnectorConf)(record: ConsumerRecord[_, GenericRecord]): Point = {
 
     log.debug("{}", record)
 
-    Point.measurement("postgres.data")
-      .addTags(Map("id" -> record.value.get("id").toString).asJava)
-      .addField("value", record.value.get("value").toString.toLong)
-      .time(record.value.get("timestamp").toString.toLong, WritePrecision.MS)
+    Point.measurement(config.measurementName)
+      .addTags(Map(Measurement.id -> record.value.get(config.id).toString).asJava)
+      .addField(Measurement.field, record.value.get(config.field).toString.toLong)
+      .time(record.value.get(config.time).toString.toLong, WritePrecision.MS)
   }
 
 }
