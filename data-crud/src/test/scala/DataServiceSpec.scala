@@ -111,12 +111,15 @@ class DataServiceSpec extends AnyWordSpec with MockFactory with Matchers {
 
       val dataStream = Stream(
         Data(Some(1), 11),
-        Data(Some(2), 22)
+        Data(Some(2), 22),
+        Data(Some(3), 33)
       )
+      val limit = 10
+      val offset = 0
 
-      (() => repository.getAll).when().returns(dataStream)
+      (repository.get _).when(limit, offset).returns(dataStream)
 
-      val request = Request[IO](GET, uri"/data")
+      val request = Request[IO](GET, Uri.unsafeFromString(s"/data?limit=$limit&offset=$offset"))
       val response = send(request)
 
       response.status shouldBe Status.Ok

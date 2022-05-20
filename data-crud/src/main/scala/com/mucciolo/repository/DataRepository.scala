@@ -14,8 +14,8 @@ class DataRepository(transactor: Transactor[IO]) {
       .transact(transactor)
   }
 
-  def getAll: Stream[IO, Data] = {
-    sql"SELECT * FROM data".query[Data].stream.transact(transactor)
+  def get(limit: Int, offset: Int): Stream[IO, Data] = {
+    sql"SELECT * FROM data LIMIT $limit OFFSET $offset".query[Data].stream.transact(transactor)
   }
 
   def findById(id: Long): IO[Option[Data]] = {
