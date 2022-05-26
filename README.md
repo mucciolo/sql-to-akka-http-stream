@@ -29,7 +29,7 @@ Now you can make the requests exemplified at `data-crud.http` to `data-crud` and
 | influxdb-sink-connector | Akka Stream + Alpakka                                |
 | influx-stream           | Akka Stream + Akka HTTP                              |
 
-## Ports
+## Port mapping
 | Service                 | Port |
 |-------------------------|------|
 | Postgres                | 5432 |
