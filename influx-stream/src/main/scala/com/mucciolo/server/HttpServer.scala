@@ -1,10 +1,13 @@
 package com.mucciolo.server
 
 import akka.actor.typed.ActorSystem
+import akka.event.Logging
+import akka.event.Logging.LogLevel
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.common.EntityStreamingSupport
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.server.directives.DebuggingDirectives
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import com.mucciolo.config.HttpServerConf
@@ -22,10 +25,15 @@ object HttpServer extends Directives with SprayJsonSupport with DefaultJsonProto
 
   def run(config: HttpServerConf, influxRepository: InfluxRepository)
          (implicit actorSystem: ActorSystem[_]): Future[Http.ServerBinding] = {
-    Http().newServerAt(config.host, config.port).bind(buildRoute(influxRepository))
+
+    val routes = buildRoutes(influxRepository)
+    val routesLogged = DebuggingDirectives.logRequestResult("influx-stream", Logging.DebugLevel)(routes)
+
+    Http().newServerAt(config.host, config.port)
+      .bind(routesLogged)
   }
 
-  private def buildRoute(influxRepository: InfluxRepository)(implicit actorSystem: ActorSystem[_]) = {
+  private def buildRoutes(influxRepository: InfluxRepository)(implicit actorSystem: ActorSystem[_]) = {
 
     path("moving-average" / LongNumber) { id =>
       get {
