@@ -2,6 +2,13 @@
 
 A microservice-based end-to-end stream flow.
 
+## Stack 
+| Service                 | Libraries                                            |
+|-------------------------|------------------------------------------------------|
+| data-crud               | http4s (with Ember + Cats) + Doobie + Flyway + Circe |
+| influxdb-sink-connector | Akka Stream + Alpakka                                |
+| influx-stream           | Akka Stream + Akka HTTP                              |
+
 ## Architecture overview
 ![Architecture Overview](img/architecture-overview.svg?raw=true)
 
@@ -21,13 +28,6 @@ A microservice-based end-to-end stream flow.
 
 Now you can make the requests exemplified at `data-crud.http` to `data-crud` and observe the streamed average at
 `http://localhost:8081/moving-average/{id}?period={seconds}&every={seconds}` to change
-
-## Libraries 
-| Service                 | Libraries                                            |
-|-------------------------|------------------------------------------------------|
-| data-crud               | http4s (with Ember + Cats) + Doobie + Flyway + Circe |
-| influxdb-sink-connector | Akka Stream + Alpakka                                |
-| influx-stream           | Akka Stream + Akka HTTP                              |
 
 ## Port mapping
 | Service                 | Port |
