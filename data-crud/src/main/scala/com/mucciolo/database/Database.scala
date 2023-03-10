@@ -2,26 +2,28 @@ package com.mucciolo.database
 
 import cats.effect._
 import com.mucciolo.config.DatabaseConf
+import com.zaxxer.hikari.HikariDataSource
 import doobie.hikari.HikariTransactor
+import doobie.util.ExecutionContexts
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.output.MigrateResult
 
 import scala.concurrent.ExecutionContext
 
 object Database {
 
-  def transactor(config: DatabaseConf, executionContext: ExecutionContext): Resource[IO, HikariTransactor[IO]] = {
-    HikariTransactor.newHikariTransactor[IO]( config.driver, config.url, config.user, config.pass,executionContext)
+  def newTransactorResource(
+    conf: DatabaseConf, ec: ExecutionContext
+  ): Resource[IO, HikariTransactor[IO]] = {
+    HikariTransactor.newHikariTransactor[IO]( conf.driver, conf.url, conf.user, conf.pass, ec)
   }
 
-  def migrate(transactor: HikariTransactor[IO]): Resource[IO, Unit] = {
-    Resource.eval {
-      transactor.configure { dataSource =>
-        IO {
-          Flyway.configure().dataSource(dataSource).load().migrate()
-          ()
-        }
-      }
-    }
+  def newMigrationResource(transactor: HikariTransactor[IO]): Resource[IO, MigrateResult] = {
+    Resource.eval(transactor.configure(dataSource => IO(migrate(dataSource))))
+  }
+
+  private def migrate(dataSource: HikariDataSource): MigrateResult = {
+    Flyway.configure().dataSource(dataSource).load().migrate()
   }
 
 }

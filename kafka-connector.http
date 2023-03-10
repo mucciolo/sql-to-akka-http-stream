@@ -9,9 +9,9 @@ Content-Type: application/json
 
     "database.port": "5432",
     "database.hostname": "postgres",
+    "database.user": "sql-to-http-stream",
     "database.password": "p455w0rd",
     "database.allowPublicKeyRetrieval": "true",
-    "database.user": "admin",
     "database.dbname": "sql-to-http-stream",
     "database.server.id": "1",
     "database.history.kafka.bootstrap.servers": "kafka:9092",

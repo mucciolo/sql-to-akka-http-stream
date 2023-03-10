@@ -1,8 +1,8 @@
-version: "3.9"
+version: "3.8"
 
 services:
   postgres:
-    image: postgres:14.2-alpine
+    image: postgres:15.2-alpine
     container_name: postgres
     restart: always
     volumes:
@@ -10,13 +10,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: admin
+      POSTGRES_USER: sql-to-http-stream
       POSTGRES_PASSWORD: p455w0rd
       POSTGRES_DB: sql-to-http-stream
     command: [ "postgres", "-c", "wal_level=logical" ]
 
   influxdb:
-    image: influxdb:2.1.1-alpine
+    image: influxdb:2.6.1-alpine
     container_name: influxdb
     restart: always
     volumes:
@@ -26,14 +26,14 @@ services:
       - "8086:8086"
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
-      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_USERNAME: sql-to-http-stream
       DOCKER_INFLUXDB_INIT_PASSWORD: p455w0rd
       DOCKER_INFLUXDB_INIT_ORG: com.mucciolo
       DOCKER_INFLUXDB_INIT_BUCKET: sql-to-http-stream
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: admin-token
 
   zookeeper:
-    image: debezium/zookeeper:1.8.1.Final
+    image: debezium/zookeeper:2.1.1.Final
     container_name: zookeeper
     restart: always
     ports:
@@ -46,7 +46,7 @@ services:
       - zookeeper_tmp:/tmp
 
   kafka:
-    image: debezium/kafka:1.8.1.Final
+    image: debezium/kafka:2.1.1.Final
     container_name: kafka
     restart: always
     depends_on:
@@ -62,7 +62,7 @@ services:
       ZOOKEEPER_CONNECT: "zookeeper:2181"
 
   schema-registry:
-    image: apicurio/apicurio-registry-kafkasql:2.2.2.Final
+    image: apicurio/apicurio-registry-kafkasql:2.4.1.Final
     container_name: schema-registry
     restart: always
     depends_on:
@@ -73,7 +73,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
 
   kafka-connect:
-    image: debezium/connect-base:1.8.1.Final
+    image: debezium/connect-base:2.1.1.Final
     container_name: kafka-connect
     restart: always
     depends_on:

@@ -25,7 +25,7 @@ object InfluxStreamApp extends App {
       log.error(failures.prettyPrint())
 
     case Right(config) =>
-      implicit val actorSystem: ActorSystem[Nothing] = ActorSystem[Nothing](Behaviors.empty, "influx-stream")
+      implicit val actorSystem: ActorSystem[_] = ActorSystem[_](Behaviors.empty, "influx-stream")
       implicit val executionContext: ExecutionContextExecutor = actorSystem.executionContext
 
       HttpServer.run(config.server, InfluxRepository(config.influx)).onComplete {

@@ -1,7 +1,7 @@
-package com.mucciolo.service
+package com.mucciolo.routes
 
 import cats.effect.IO
-import com.mucciolo.entity.Data
+import com.mucciolo.domain.Data
 import com.mucciolo.repository.DataRepository
 import fs2.Stream
 import io.circe.generic.auto._
@@ -11,7 +11,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.`Content-Type`
 import org.http4s.{HttpRoutes, MediaType}
 
-class DataService(repository: DataRepository) extends Http4sDsl[IO] {
+object DataRoutes extends Http4sDsl[IO] {
 
   private val DataPath: Path = Root / "data"
 
@@ -21,7 +21,7 @@ class DataService(repository: DataRepository) extends Http4sDsl[IO] {
     object MinValue extends OptionalQueryParamDecoderMatcher[Int]("min")
   }
 
-  val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
+  def apply(repository: DataRepository): HttpRoutes[IO] = HttpRoutes.of[IO] {
 
     case GET -> DataPath :? QueryParam.Limit(limit) +& QueryParam.Offset(offset) +& QueryParam.MinValue(min)  =>
       Ok(

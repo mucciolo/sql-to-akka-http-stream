@@ -4,9 +4,11 @@ import cats.effect.{IO, Resource}
 import com.comcast.ip4s.{Host, IpLiteralSyntax, Port}
 import com.mucciolo.config.{AppConf, ServerConf}
 import com.mucciolo.database.Database
-import com.mucciolo.repository.DataRepository
-import com.mucciolo.service.DataService
+import com.mucciolo.repository.PostgresDataRepository
+import com.mucciolo.routes.DataRoutes
 import doobie.hikari.HikariTransactor
+import doobie.util.ExecutionContexts
+import org.http4s.HttpRoutes
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.http4s.server.middleware.Logger
@@ -14,33 +16,31 @@ import pureconfig.ConfigSource
 import pureconfig.generic.auto._
 import pureconfig.module.catseffect.syntax._
 
-import scala.concurrent.ExecutionContext
-
 object HttpServer {
 
-  object Default {
-    val host = ipv4"127.0.0.1"
-    val port = port"8080"
+  private object Default {
+    val Host = ipv4"127.0.0.1"
+    val Port = port"8080"
   }
 
-  def run(): IO[Nothing] = {
+  def runForever(): IO[Nothing] = {
     for {
       config <- Resource.eval(ConfigSource.default.loadF[IO, AppConf]())
-      transactor <- Database.transactor(config.database, ExecutionContext.global)
-      _ <- Database.migrate(transactor)
-      _ <- buildEmberServer(config.server, transactor)
+      ec <- ExecutionContexts.cachedThreadPool[IO]
+      transactor <- Database.newTransactorResource(config.database, ec)
+      _ <- Database.newMigrationResource(transactor)
+      repository = new PostgresDataRepository(transactor)
+      routes = DataRoutes(repository)
+      _ <- buildEmberServer(config.server, routes)
     } yield ()
   }.useForever
 
-  private def buildEmberServer(config: ServerConf, transactor: HikariTransactor[IO]): Resource[IO, Server] = {
+  private def buildEmberServer(config: ServerConf, routes: HttpRoutes[IO]): Resource[IO, Server] = {
     EmberServerBuilder.default[IO]
-      .withHost(Host.fromString(config.host).getOrElse(Default.host))
-      .withPort(Port.fromInt(config.port).getOrElse(Default.port))
+      .withHost(Host.fromString(config.host).getOrElse(Default.Host))
+      .withPort(Port.fromInt(config.port).getOrElse(Default.Port))
       .withHttpApp(
-        Logger.httpApp(
-          logHeaders = config.logHeaders,
-          logBody = config.logBody
-        )(new DataService(new DataRepository(transactor)).routes.orNotFound)
+        Logger.httpApp(logHeaders = config.logHeaders, logBody = config.logBody)(routes.orNotFound)
       )
       .build
   }
