@@ -1,16 +1,16 @@
-lazy val AkkaVersion = "2.6.19"
-lazy val AkkaStreamVersion = "3.0.0"
-lazy val InfluxDbClientVersion = "6.0.0"
+lazy val AkkaVersion = "2.7.0"
+lazy val AkkaStreamVersion = "4.0.0"
+lazy val InfluxDbClientVersion = "6.7.0"
 lazy val ApicurioRegistryVersion = "2.2.2.Final"
-lazy val LogbackVersion = "1.2.11"
-lazy val PureConfigVersion = "0.17.1"
+lazy val LogbackVersion = "1.4.5"
+lazy val PureConfigVersion = "0.17.2"
 
 lazy val root = (project in file("."))
   .settings(
     organization := "com.mucciolo",
     name := "influxdb-sink-connector",
-    version := "0.0.1-SNAPSHOT",
-    scalaVersion := "2.13.8",
+    version := "1.0.0-SNAPSHOT",
+    scalaVersion := "2.13.10",
     libraryDependencies ++= Seq(
       "com.typesafe.akka"     %% "akka-stream-kafka"                    % AkkaStreamVersion,
       "com.typesafe.akka"     %% "akka-stream"                          % AkkaVersion,

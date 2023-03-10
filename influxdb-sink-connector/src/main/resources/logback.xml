@@ -9,7 +9,7 @@
 
     <logger name="org.apache" level="INFO"/>
 
-    <root level="debug">
+    <root level="DEBUG">
         <appender-ref ref="console"/>
     </root>
 

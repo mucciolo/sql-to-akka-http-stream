@@ -1,4 +1,4 @@
-package com.mucciolo.connector
+package com.mucciolo.core
 
 import akka.Done
 import akka.actor.CoordinatedShutdown
@@ -11,36 +11,35 @@ import akka.stream.scaladsl.{Flow, Keep}
 import com.influxdb.client.InfluxDBClientFactory
 import com.influxdb.client.domain.WritePrecision
 import com.influxdb.client.write.Point
-import com.mucciolo.connector.config.{AppConf, ConnectorConf, KafkaConf}
+import com.mucciolo.config._
+import com.mucciolo.util.Log
 import io.apicurio.registry.rest.client.RegistryClientFactory
 import io.apicurio.registry.serde.avro.AvroKafkaDeserializer
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
 import org.apache.kafka.common.serialization.Deserializer
-import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.language.postfixOps
 
-object InfluxDbSinkConnector {
+object InfluxDbSinkConnector extends Log {
 
-  private val log: Logger = LoggerFactory.getLogger(getClass)
   private object Measurement {
     val id = "id"
     val field = "value"
   }
 
-  def run(config: AppConf)(implicit actorSystem: ActorSystem[Nothing]): Future[Done] = {
+  def runForever(config: AppConf)(implicit system: ActorSystem[_]): Future[Done] = {
 
-    implicit val executionContext: ExecutionContext = actorSystem.executionContext
+    implicit val ec: ExecutionContext = system.executionContext
 
     val influxDb = InfluxDBClientFactory.create(config.influx.asInfluxDBClientOptions).getWriteApiBlocking
     val kafkaConsumerSettings = buildKafkaConsumerSettings(config.kafka)
     val convertGenericRecordToPoint = genericRecordToPoint(config.connector)(_)
 
-    val (control, stream) = Consumer
+    val (control, consumer) = Consumer
       .sourceWithOffsetContext(kafkaConsumerSettings, Subscriptions.topics(config.kafka.topic))
       .via(Flow.fromFunction {
         case (record, offset) => (convertGenericRecordToPoint(record), offset)
@@ -49,24 +48,24 @@ object InfluxDbSinkConnector {
         case (point, offset) => (influxDb.writePoint(point), offset)
       })
       .withAttributes(supervisionStrategy(Supervision.resumingDecider))
-      .toMat(Committer.sinkWithOffsetContext(CommitterSettings(actorSystem)))(Keep.both)
+      .toMat(Committer.sinkWithOffsetContext(CommitterSettings(system)))(Keep.both)
       .run()
 
-    CoordinatedShutdown(actorSystem).addJvmShutdownHook(() => {
-      control.drainAndShutdown(stream)
+    CoordinatedShutdown(system).addJvmShutdownHook(() => {
+      control.drainAndShutdown(consumer)
     })
 
-    stream
+    consumer
   }
 
-  private def buildKafkaConsumerSettings(kafkaConf: KafkaConf)(implicit actorSystem: ActorSystem[Nothing]) = {
+  private def buildKafkaConsumerSettings(kafkaConf: KafkaConf)(implicit system: ActorSystem[_]) = {
 
     val registryClient = RegistryClientFactory.create(kafkaConf.schemaRegistryUrl)
     val kafkaAvroDeserializer = new AvroKafkaDeserializer(registryClient)
     kafkaAvroDeserializer.configure(Map.empty[String, Any].asJava, false)
     val genericRecordDeserializer = kafkaAvroDeserializer.asInstanceOf[Deserializer[GenericRecord]]
 
-    ConsumerSettings(actorSystem, genericRecordDeserializer, genericRecordDeserializer)
+    ConsumerSettings(system, genericRecordDeserializer, genericRecordDeserializer)
       .withBootstrapServers(kafkaConf.kafkaBootstrapServers)
       .withGroupId(kafkaConf.groupId)
       .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")

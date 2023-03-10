@@ -3,9 +3,9 @@ package com.mucciolo
 import akka.Done
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
-import com.mucciolo.connector.InfluxDbSinkConnector
-import com.mucciolo.connector.config.AppConf
-import org.slf4j.{Logger, LoggerFactory}
+import com.mucciolo.config._
+import com.mucciolo.core.InfluxDbSinkConnector
+import com.mucciolo.util.Log
 import pureconfig._
 import pureconfig.generic.auto._
 
@@ -13,22 +13,20 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
-object InfluxDbSinkConnectorApp extends App {
+object InfluxDbSinkConnectorApp extends App with Log {
 
-  private val log: Logger = LoggerFactory.getLogger(getClass)
-
-  private val stream: Future[Done] = ConfigSource.default.load[AppConf] match {
+  private val consumer: Future[Done] = ConfigSource.default.load[AppConf] match {
 
     case Left(failures) =>
       log.error(failures.prettyPrint())
       Future.successful(Done)
 
     case Right(config) =>
-      implicit val actorSystem: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.connector.name)
-      InfluxDbSinkConnector.run(config)
+      implicit val system: ActorSystem[_] = ActorSystem(Behaviors.empty, config.connector.name)
+      InfluxDbSinkConnector.runForever(config)
 
   }
 
-  Await.ready(stream, Duration.Inf)
+  Await.ready(consumer, Duration.Inf)
 
 }
