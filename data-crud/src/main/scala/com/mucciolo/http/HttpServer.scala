@@ -1,4 +1,4 @@
-package com.mucciolo.server
+package com.mucciolo.http
 
 import cats.effect.{IO, Resource}
 import com.comcast.ip4s.{Host, IpLiteralSyntax, Port}

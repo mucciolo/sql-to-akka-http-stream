@@ -3,7 +3,6 @@ version: "3.8"
 services:
   postgres:
     image: postgres:15.2-alpine
-    container_name: postgres
     restart: always
     volumes:
       - postgres:/var/lib/postgresql/data
@@ -17,7 +16,6 @@ services:
 
   influxdb:
     image: influxdb:2.6.1-alpine
-    container_name: influxdb
     restart: always
     volumes:
       - influxdb_data:/var/lib/influxdb2
@@ -34,7 +32,6 @@ services:
 
   zookeeper:
     image: debezium/zookeeper:2.1.1.Final
-    container_name: zookeeper
     restart: always
     ports:
       - "2181:2181"
@@ -47,7 +44,6 @@ services:
 
   kafka:
     image: debezium/kafka:2.1.1.Final
-    container_name: kafka
     restart: always
     depends_on:
       - zookeeper
@@ -62,8 +58,7 @@ services:
       ZOOKEEPER_CONNECT: "zookeeper:2181"
 
   schema-registry:
-    image: apicurio/apicurio-registry-kafkasql:2.4.1.Final
-    container_name: schema-registry
+    image: apicurio/apicurio-registry-kafkasql:2.2.2.Final
     restart: always
     depends_on:
       - kafka
@@ -74,7 +69,6 @@ services:
 
   kafka-connect:
     image: debezium/connect-base:2.1.1.Final
-    container_name: kafka-connect
     restart: always
     depends_on:
       - postgres
@@ -102,7 +96,6 @@ services:
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui
     ports:
       - "8090:8080"
     depends_on:

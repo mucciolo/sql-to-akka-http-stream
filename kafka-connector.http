@@ -6,6 +6,7 @@ Content-Type: application/json
   "config": {
     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
     "plugin.name": "pgoutput",
+    "topic.prefix": "sql-to-http-stream",
 
     "database.port": "5432",
     "database.hostname": "postgres",
@@ -15,7 +16,7 @@ Content-Type: application/json
     "database.dbname": "sql-to-http-stream",
     "database.server.id": "1",
     "database.history.kafka.bootstrap.servers": "kafka:9092",
-    "database.history.kafka.topic": "database.schema.history",
+    "database.history.kafka.topic": "postgres.schema.history",
     "database.server.name": "localhost",
 
     "table.include.list": "public.data",
@@ -28,8 +29,8 @@ Content-Type: application/json
     "key.converter.apicurio.registry.converter.serializer": "io.apicurio.registry.serde.avro.AvroKafkaSerializer",
     "key.converter.apicurio.registry.converter.deserializer": "io.apicurio.registry.serde.avro.AvroKafkaDeserializer",
 
-    "value.converter.apicurio.registry.url": "http://schema-registry:8080",
     "value.converter": "io.apicurio.registry.utils.converter.AvroConverter",
+    "value.converter.apicurio.registry.url": "http://schema-registry:8080",
     "value.converter.apicurio.registry.converter.serializer": "io.apicurio.registry.serde.avro.AvroKafkaSerializer",
     "value.converter.apicurio.registry.converter.deserializer": "io.apicurio.registry.serde.avro.AvroKafkaDeserializer",
     "value.converter.apicurio.registry.auto-register": "true",
