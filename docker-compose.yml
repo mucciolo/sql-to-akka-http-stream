@@ -31,7 +31,7 @@ services:
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: admin-token
 
   zookeeper:
-    image: debezium/zookeeper:2.1.1.Final
+    image: debezium/zookeeper:2.1.3.Final
     restart: always
     ports:
       - "2181:2181"
@@ -43,7 +43,7 @@ services:
       - zookeeper_tmp:/tmp
 
   kafka:
-    image: debezium/kafka:2.1.1.Final
+    image: debezium/kafka:2.1.3.Final
     restart: always
     depends_on:
       - zookeeper
@@ -58,7 +58,7 @@ services:
       ZOOKEEPER_CONNECT: "zookeeper:2181"
 
   schema-registry:
-    image: apicurio/apicurio-registry-kafkasql:2.2.2.Final
+    image: apicurio/apicurio-registry-kafkasql:2.3.1.Final
     restart: always
     depends_on:
       - kafka
@@ -68,7 +68,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
 
   kafka-connect:
-    image: debezium/connect-base:2.1.1.Final
+    image: debezium/connect-base:2.1.3.Final
     restart: always
     depends_on:
       - postgres
