@@ -1,15 +1,15 @@
-lazy val AkkaVersion = "2.6.19"
-lazy val AkkaHttpVersion = "10.2.9"
-lazy val InfluxDbClientVersion = "6.0.0"
-lazy val LogbackVersion = "1.2.11"
-lazy val PureConfigVersion = "0.17.1"
+lazy val AkkaVersion = "2.7.0"
+lazy val AkkaHttpVersion = "10.5.0"
+lazy val InfluxDbClientVersion = "6.7.0"
+lazy val LogbackVersion = "1.4.5"
+lazy val PureConfigVersion = "0.17.2"
 
 lazy val root = (project in file("."))
   .settings(
     organization := "com.mucciolo",
     name := "influx-stream",
-    version := "0.0.1-SNAPSHOT",
-    scalaVersion := "2.13.8",
+    version := "1.0.0-SNAPSHOT",
+    scalaVersion := "2.13.10",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
       "com.typesafe.akka" %% "akka-stream-typed" % AkkaVersion,

@@ -1,23 +1,19 @@
 package com.mucciolo
 
-import akka.actor.CoordinatedShutdown
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.scaladsl.Behaviors
 import com.mucciolo.config.AppConf
-import com.mucciolo.influx.InfluxRepository
-import com.mucciolo.server.HttpServer
-import org.slf4j.{Logger, LoggerFactory}
+import com.mucciolo.influx.InfluxClient
+import com.mucciolo.http.HttpServer
+import com.mucciolo.routes.InfluxRoutes
 import pureconfig.ConfigSource
-import pureconfig._
 import pureconfig.generic.auto._
+import com.mucciolo.util.Log
 
-import scala.concurrent.ExecutionContextExecutor
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-object InfluxStreamApp extends App {
-
-  private val log: Logger = LoggerFactory.getLogger(getClass)
+object InfluxStreamApp extends App with Log {
 
   ConfigSource.default.load[AppConf] match {
 
@@ -25,22 +21,23 @@ object InfluxStreamApp extends App {
       log.error(failures.prettyPrint())
 
     case Right(config) =>
-      implicit val actorSystem: ActorSystem[_] = ActorSystem[_](Behaviors.empty, "influx-stream")
-      implicit val executionContext: ExecutionContextExecutor = actorSystem.executionContext
 
-      HttpServer.run(config.server, InfluxRepository(config.influx)).onComplete {
+      implicit val system: ActorSystem[_] = ActorSystem[Nothing](Behaviors.empty, "influx-stream")
+      implicit val ec: ExecutionContext = system.executionContext
 
-        case Success(binding) =>
-          log.info("Server started on http://{}:{}", binding.localAddress.getHostName, binding.localAddress.getPort)
-          CoordinatedShutdown(actorSystem).addJvmShutdownHook(() => {
-            binding.terminate(10.seconds)
-          })
+      val repository = InfluxClient(config.influx)
+      val routes = InfluxRoutes(repository)
 
-        case Failure(exception) =>
-          log.error(exception.getMessage)
-          actorSystem.terminate()
-      }
+      HttpServer.runForever(config.server, routes)
+        .onComplete {
+          case Success(binding) =>
+            log.info("Server started on http://{}:{}",
+              binding.localAddress.getHostName, binding.localAddress.getPort)
 
+          case Failure(exception) =>
+            log.error(exception.getMessage)
+            system.terminate()
+        }
   }
 
 }
